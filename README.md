@@ -1,27 +1,66 @@
-Hacker News Search App
-An interactive React app for searching and filtering Hacker News articles, with user search history tracking and filtering options by date, popularity, and tags. This project uses Redux for state management, allowing users to store and view their search history and apply dynamic query parameters.
+# Hacker News Search App
 
-🚀 Features
-🔍 Search Hacker News: Search for Hacker News articles by keywords.
-📖 Search History: Save user search history and view or clear it after logging in.
-📅 Filtering Options: Filter results by date and popularity.
-⏩ Pagination: Navigate through paginated results.
-🔑 User Login: Basic login system with personalized search history display.
+An interactive search app for Hacker News articles with user login and search history tracking. Built with React and Redux Toolkit, it offers features like keyword search, filtering options, and paginated results.
 
-🛠️ Technologies Used
-React - Frontend library for building user interfaces.
-Redux Toolkit - State management for search history and user login.
-React Router - Routing for page navigation.
-JavaScript (ES6+) - Core programming language.
-Hacker News API - Public API for search data.
-Optional - dayjs for advanced date manipulation (if needed).
+## Features
 
-🔍 Usage
-Search for Articles
-On the Home page, enter a keyword in the search bar and hit "Enter" or click the "Search" button.
-Use filter options to sort by date or popularity.
-Results are paginated; use "Next" and "Previous" buttons to navigate through pages.
-View and Clear Search History
-Log in to enable the Search History feature.
-Visit the Search History page to view your past queries.
-Clear history by clicking the Clear Search History button.
+- **Search Hacker News** by keywords.
+- **Search History** tracking (view and clear history after login).
+- **Filter Options** search bar, for ,by , search.
+- **User Login** with personalized history.
+
+## Technologies Used
+
+- **React**
+- **Redux Toolkit**
+- **React Router**
+- **Tailwind CSS**
+- **JavaScript (ES6+)**
+- **Hacker News API**
+
+## Setup and Installation
+
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/Sachinnegi825/Search_Hacker_News_Clone.git
+   ```
+
+2. Navigate into the project directory:
+
+   ```bash
+   cd hacker-news-search
+   ```
+
+3. Install the required dependencies:
+
+   ```bash
+   npm install
+   ```
+
+4. Run the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+   The app will be running at `➜  Local:  `http://localhost:5173/`.
+
+## How It Works
+
+### Searching Hacker News
+
+1. On the **Home page**, type a query in the search bar .
+2. Use **filters** to sort results by date or popularity.
+3. The app will display a list of relevant articles based on your search and filters.
+
+### Search History
+
+- **After login**, users can view their past search history.
+- The **Search History page** displays queries with timestamps.
+- Users can **clear history** by clicking the "Clear History" button.
+
+### User Authentication
+
+- Users can log in and have a personalized search history.
+- The **login page** authenticates users, and once logged in, they can see their search history.
