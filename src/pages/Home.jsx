@@ -8,7 +8,7 @@ const Home = () => {
   const [query, setQuery] = useState("");
   const [data, setData] = useState([]);
   const [sortOption, setSortOption] = useState("search");
-  const [dateRange, setDateRange] = useState(0);
+  const [dateRange, setDateRange] = useState(12345);
   const [tags, setTags] = useState("story");
   const user = useSelector((state) => state.user.username);
   const dispatch = useDispatch();

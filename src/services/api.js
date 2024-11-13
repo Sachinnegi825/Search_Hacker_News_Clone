@@ -8,7 +8,7 @@ export const fetchHackerNewsData = async (
   hitsPerPage = 10,
   tags = "story",
   sortOption = "search",
-  dateRange = 213
+  dateRange
 ) => {
   try {
     const numericFilters = `created_at_i>${dateRange}`;
