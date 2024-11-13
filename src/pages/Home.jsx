@@ -3,26 +3,30 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchHackerNewsData } from "../services/api";
 import { addSearchHistory } from "../store/searchHistorySlice";
-import dayjs from "dayjs";
 
 const Home = () => {
   const [query, setQuery] = useState("");
-  const [baseData, setBaseData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [page, setPage] = useState(0);
-  const [sortOption, setSortOption] = useState("");
-  const [dateRange, setDateRange] = useState("");
-  const [tags, setTags] = useState("");
+  const [data, setData] = useState([]);
+  const [sortOption, setSortOption] = useState("search");
+  const [dateRange, setDateRange] = useState(0);
+  const [tags, setTags] = useState("story");
   const user = useSelector((state) => state.user.username);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const hitsPerPage = 10;
+  const [page, setPage] = useState(1);
+  const [currentPageGroup, setCurrentPageGroup] = useState([1, 2, 3, 4, 5]);
 
-  // Function to update URL parameters
+  const totalPages = 50;
+
+  const getCurrentTimestamp = () => Math.floor(Date.now() / 1000);
+  const getPastTimestamp = (days) =>
+    getCurrentTimestamp() - days * 24 * 60 * 60;
+
   const updateURLParams = () => {
     const params = new URLSearchParams();
     if (query) params.set("query", query);
-    if (page) params.set("page", page);
+    if (page) params.set("page", page - 1);
     if (sortOption) params.set("sortOption", sortOption);
     if (dateRange) params.set("dateRange", dateRange);
     if (tags) params.set("tags", tags);
@@ -32,9 +36,15 @@ const Home = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetchHackerNewsData(query, page, hitsPerPage);
-      setBaseData(response?.hits || []);
-      setFilteredData(response?.hits || []);
+      const response = await fetchHackerNewsData(
+        query,
+        page - 1,
+        hitsPerPage,
+        tags,
+        sortOption,
+        getPastTimestamp(dateRange)
+      );
+      setData(response?.hits || []);
     } catch (error) {
       console.log(error);
     }
@@ -42,7 +52,7 @@ const Home = () => {
 
   useEffect(() => {
     fetchData();
-  }, [query, page]);
+  }, [query, page, tags, sortOption, dateRange]);
 
   useEffect(() => {
     updateURLParams();
@@ -51,55 +61,6 @@ const Home = () => {
   const handleSearch = (e) => {
     setQuery(e.target.value);
   };
-
-  const applyFilters = () => {
-    let filtered = baseData;
-    const now = dayjs();
-
-    if (query) {
-      filtered = filtered.filter((item) =>
-        item.title.toLowerCase().includes(query.toLowerCase())
-      );
-    }
-
-    if (dateRange === "last24h") {
-      filtered = filtered.filter((item) =>
-        dayjs(item.created_at).isAfter(now.subtract(1, "day"))
-      );
-    } else if (dateRange === "lastWeek") {
-      filtered = filtered.filter((item) =>
-        dayjs(item.created_at).isAfter(now.subtract(7, "day"))
-      );
-    } else if (dateRange === "lastMonth") {
-      filtered = filtered.filter((item) =>
-        dayjs(item.created_at).isAfter(now.subtract(1, "month"))
-      );
-    } else if (dateRange === "lastYear") {
-      filtered = filtered.filter((item) =>
-        dayjs(item.created_at).isAfter(now.subtract(1, "year"))
-      );
-    }
-
-    if (sortOption === "byDate") {
-      filtered = filtered
-        .slice()
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    } else if (sortOption === "byPopularity") {
-      filtered = filtered.slice().sort((a, b) => b.points - a.points);
-    }
-
-    if (tags) {
-      filtered = filtered.filter(
-        (item) => item._tags && item._tags.includes(tags)
-      );
-    }
-
-    setFilteredData(filtered);
-  };
-
-  useEffect(() => {
-    applyFilters();
-  }, [baseData, dateRange, sortOption, tags]);
 
   const highlightText = (title) => {
     if (!query) return title;
@@ -115,9 +76,36 @@ const Home = () => {
     );
   };
 
+  const handleNextPage = () => {
+    if (page < totalPages) {
+      const newPage = page + 1;
+      setPage(newPage);
+
+      // Shift currentPageGroup if the newPage is beyond the visible range
+      if (newPage > currentPageGroup[currentPageGroup.length - 1]) {
+        setCurrentPageGroup((prev) => prev.map((p) => p + 1));
+      }
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (page > 1) {
+      const newPage = page - 1;
+      setPage(newPage);
+
+      // Shift currentPageGroup if the newPage is below the visible range
+      if (newPage < currentPageGroup[0]) {
+        setCurrentPageGroup((prev) => prev.map((p) => p - 1));
+      }
+    }
+  };
+
+  const handlePageClick = (pageNum) => {
+    setPage(pageNum);
+  };
   return (
     <div className="max-w-full md:max-w-screen-xl m-auto">
-      <header className="bg-orange-500 text-white p-4 ">
+      <header className="bg-orange-500 text-white p-4">
         <div className="flex justify-between items-center">
           <p className="w-1/5 text-3xl text-black font-semibold">
             Search <br />
@@ -128,14 +116,13 @@ const Home = () => {
             placeholder="Search..."
             value={query}
             onChange={handleSearch}
-            className="mt-2 p-2 rounded w-4/5"
+            className="mt-2 p-2 rounded w-4/5 text-black"
           />
           <p className="w-1/5 ml-5">
-            {user ? `Welcome, ${user?.toUpperCase()}` : null}{" "}
+            {user ? `Welcome, ${user?.toUpperCase()}` : null}
           </p>
           {user && (
             <button className="bg-blue-950 p-2 text-white rounded-lg cursor-pointer">
-              {" "}
               <Link to={"/history"}>History</Link>
             </button>
           )}
@@ -150,11 +137,11 @@ const Home = () => {
             onChange={(e) => setDateRange(e.target.value)}
             className="p-2 border"
           >
-            <option value="all">All Time</option>
-            <option value="last24h">Last 24 Hours</option>
-            <option value="lastWeek">Last Week</option>
-            <option value="lastMonth">Last Month</option>
-            <option value="lastYear">Last Year</option>
+            <option value={349}>All Time</option>
+            <option value={1}>Last 24 Hours</option>
+            <option value={7}>Last Week</option>
+            <option value={30}>Last Month</option>
+            <option value={365}>Last Year</option>
           </select>
         </div>
 
@@ -165,8 +152,8 @@ const Home = () => {
             onChange={(e) => setSortOption(e.target.value)}
             className="p-2 border"
           >
-            <option value="byPopularity">Popularity</option>
-            <option value="byDate">Date</option>
+            <option value="search">Popularity</option>
+            <option value="search_by_date">Date</option>
           </select>
         </div>
 
@@ -177,25 +164,35 @@ const Home = () => {
             onChange={(e) => setTags(e.target.value)}
             className="p-2 border"
           >
+            <option value="all">All</option>
             <option value="story">Stories</option>
             <option value="comment">Comments</option>
+            <option value="poll">Polls</option>
+            <option value="job">Jobs</option>
+            <option
+              value="show_hn
+"
+            >
+              Show HN
+            </option>
+            <option value="ask_hn">Ask HN</option>
           </select>
         </div>
       </div>
 
       <div>
-        {filteredData.map((item) => (
+        {data.map((item) => (
           <div
             key={item.objectID}
             onClick={() => {
-              window.open(item.url, "_blank"),
-                dispatch(
-                  addSearchHistory({
-                    url: item?.url,
-                    title: item?.title,
-                    time: new Date(),
-                  })
-                );
+              window.open(item.url, "_blank");
+              dispatch(
+                addSearchHistory({
+                  url: item?.url,
+                  title: item?.title,
+                  time: new Date(),
+                })
+              );
             }}
             className="cursor-pointer"
           >
@@ -209,14 +206,31 @@ const Home = () => {
           </div>
         ))}
       </div>
-
-      <div className="flex justify-between mt-4">
-        <button onClick={() => setPage(page - 1)} disabled={page === 0}>
+      <div className="flex justify-center gap-4 my-6">
+        <button
+          onClick={handlePreviousPage}
+          disabled={page === 1}
+          className="p-2 border-2 rounded-md"
+        >
           Previous
         </button>
+
+        {currentPageGroup.map((pageNum) => (
+          <button
+            key={pageNum}
+            onClick={() => handlePageClick(pageNum)}
+            className={`px-4 border-2 rounded-md ${
+              page === pageNum ? "bg-blue-500 text-white" : ""
+            }`}
+          >
+            {pageNum}
+          </button>
+        ))}
+
         <button
-          onClick={() => setPage(page + 1)}
-          disabled={filteredData.length === 0}
+          onClick={handleNextPage}
+          disabled={page === totalPages}
+          className="p-2 border-2 rounded-md"
         >
           Next
         </button>
